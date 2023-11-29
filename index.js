@@ -1,46 +1,34 @@
-const http = require('http');
-const socketIO = require('socket.io');
+// Código do cliente Socket
+const readline = require("readline"); // Importa o módulo readline, auxilia na leitura e envio de dados pelo terminal
 
-const server = http.createServer();
-const io = socketIO(server);
+let rl = readline.createInterface({input:process.stdin,output: process.stdout}); // Cria uma interface de leitura e escrita
+const ioClient = require("socket.io-client"); // Importa o socket.io-client biblioteca usada para ciar o cliente socket
+const clientSocket = ioClient(`http://localhost:3001`); // Cria o cliente socket e conecta ao servidor socket
 
-io.on('connection', (socket) => {
-
-
-  console.log(`Um cliente acaba de entrar`);
-
-  socket.on('pergunta', (pergunta) => {
-    console.log(`Pergunta recebida do cliente (ID: ${socket.id}): ${pergunta}`);
-    const resposta = `Resposta para: ${pergunta}`;
-    socket.emit('resposta', resposta);
-  });
-
-  socket.on('disconnect', () => {
-    console.log(`Cliente desconectado (ID: ${socket.id})`);
-  });
+clientSocket.on("boasvindas", (boasvindas) => { // Evento boasvindas, recebe a mensagem do servidor
+  console.log(boasvindas);
 });
 
-const PORT = process.env.PORT || 3001;
-server.listen(PORT, () => {
-    var figlet = require("figlet");
-    
-  console.log(`Pizzaria aberta! Rua Local http://localhost, número:${PORT}`);
-  console.log(
-    figlet.textSync("Bem vindo à Node Pizzaria!", {
-      font: "Standard",
-      horizontalLayout: "default",
-      verticalLayout: "default",
-      width: 80,
-      whitespaceBreak: true,
-    })
-  );
-  // Código do cliente Socket.IO no mesmo arquivo
-  const ioClient = require('socket.io-client');
-  const clientSocket = ioClient(`http://localhost:${PORT}`);
+clientSocket.on("chooseOption", (resposta) => {
 
-  clientSocket.on('resposta', (resposta) => {
-    console.log(`Resposta do servidor: ${resposta}`);
+  rl.prompt()
+    rl.question(`${resposta} `, (respostaCliente) => {
+    clientSocket.emit('chooseOption', respostaCliente);
   });
 
-  clientSocket.emit('pergunta', 'Vocês tem pizza de calabresa?');
+
+  
+clientSocket.on("disconnect", () => {
+  console.log("Obrigado! Volte sempre :)\n");
+  process.exit(0);
+})
+
+});
+clientSocket.on("chooseMenu", (resposta) => {
+
+  rl.prompt()
+    rl.question(resposta, (chooseMenu) => {
+    clientSocket.emit('chooseMenu', chooseMenu);
+  });
+
 });
